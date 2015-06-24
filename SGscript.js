@@ -88,8 +88,7 @@ $('document').ready(function(){
 });
 
 function init() {
-    // $( ".giveaway__row-outer-wrap .giveaway__heading__name, .global__image-outer-wrap--avatar-small, .giveaway__links, .giveaway__column--width-fill" ).hide();
-
+    //change the page selection links with a more button
     $('.pagination')
     .empty()
     .append('<a onClick="" id="moreBtn" class="page__heading__button page__heading__button--green" style="width: 90%; text-align: center; padding: 7px">More</a>')
@@ -102,30 +101,25 @@ function init() {
 
     $('.giveaway__row-outer-wrap').parent().addClass('gasList');
     $('.giveaway__row-outer-wrap').wrapAll('<div id="pg1" />');
-    /*
-    $('.giveaway__heading').each(function() {
-       $(this).children().eq(1).appendTo($(this)); 
-    });
-
-    $('.giveaway__column--contributor-level').html(function() {
-     return $(this).html().match(/\d/g) + '+';
-    })*/
 }
 
 function formatGAsList($list) {
     $.each($list, function() {
-        $(this).find( ".giveaway__heading__name, .global__image-outer-wrap--avatar-small, .giveaway__links, .giveaway__column--width-fill" ).hide();
+        var innerWrap =  $(this).children().eq(0); 
+        var isFaded = innerWrap.hasClass('is-faded');
+
+        $(this).find( ".giveaway__heading__name, .global__image-outer-wrap--avatar-small, .giveaway__links, .giveaway__column--width-fill, a.giveaway__column--group" ).hide();
 
         $(this).find('.giveaway__heading').each(function() {
             $(this).children().eq(1).appendTo($(this)); 
         });
 
+        //remove the word Level from the contributor level tag
         $(this).find('.giveaway__column--contributor-level').html(function() {
             return $(this).html().match(/\d/g) + '+';
         })
 
-        $(this).find('a.giveaway__column--group').hide();
-
+        //add raise effect
         $(this).addClass('effect down');
         $(this).on('mouseenter', function() {
             $(this).removeClass('down').addClass('up'); 
@@ -133,34 +127,42 @@ function formatGAsList($list) {
             $(this).removeClass('up').addClass('down'); 
         });
 
-        /* $(this).find('.giveaway__columns')
-        .append('<div class="giveaway__column--contributor-level giveaway__column--contributor-level--positive" title="Enter Giveaway" style="left:0;z-index:10;top:80px;border-radius:0;width:272px;"><i class="fa fa-plus-circle"></i></div>');*/
+        //data below the GA card
         $(this).find('.giveaway__links').css({'width':'244px','display':'block','padding':'17px 15px', 'padding-bottom':'0', 'margin':'-1px','text-align':'center'});
         $(this).find('.giveaway__links').children('a').eq(0).css({'float':'left','margin':'0'});
         $(this).find('.giveaway__links').children('a').eq(1).css({'float':'right','margin':'0'});
-        $(this).find('.giveaway__links').append('<div class="enterGA" style="width:50px;margin: 0 auto;"><i class="fa fa-plus-circle" style="color:rgba(63,115,0,0.95); text-shadow:none;"></i></div>');
+        $(this).find('.giveaway__links').append('<div class="enterGA" style="width:50px;margin: 0 auto;"><i class="fa fa-' + (isFaded ? 'minus' : 'plus') + '-circle" style="color:' + (isFaded ? '#da5d88':'rgba(63,115,0,0.95)') + '; text-shadow:none;"></i></div>');
         $(this).css({'padding-bottom':'25px'});
 
-
+        //enter GA
         var code =  $(this).find('a.global__image-outer-wrap--game-medium').attr('href').split('/')[2];
         var formData = {
             "code": code,
-            "do": "entry_insert",
+            //"do": isFaded ? "entry_delete" : "entry_insert",
             "xsrf_token": "2fae24d08363cc8da10dc6028eceb776"
         };
-        $(this).find('.enterGA').on('click', function() {       
-            console.log(formData);
-            /*$.ajax({
-                url: "http://www.steamgifts.com/ajax.php",
-                type: "POST",
-                dataType: "json",
-                data: data,
-            }).done(function() {
-                console.log('yes');
+        $(this).find('.enterGA').on('click', function() {   
+            var icon = $(this).find('i');
+            isFaded = innerWrap.hasClass('is-faded');
+            formData.do = isFaded ? "entry_delete" : "entry_insert",
+                $.ajax({
+                    url: "http://www.steamgifts.com/ajax.php",
+                    type: "POST",
+                    dataType: "json",
+                    data: formData,
+                }).done(function() {
+                if(isFaded) {
+                    innerWrap.removeClass('is-faded');
+                    icon.removeClass('fa-minus-circle').addClass('fa-plus-circle').css('color', 'rgba(63,115,0,0.95)');
+                } else {
+                    innerWrap.addClass('is-faded');
+                    icon.removeClass('fa-plus-circle').addClass('fa-minus-circle').css('color', '#da5d88');
+                }
+                isFaded = !isFaded;
             })
             .fail(function() {
-                console.log('no');
-            })*/
+                console.log('Error.');
+            })
         });
     });
 };
@@ -197,7 +199,8 @@ function addGas($elements) {
 
     $('#pg'+LAST_LOADED_PAGE).removeClass('fadeout').addClass('fadein');
 
-    //I don't know...just rewriting this code so the popup opens...
+
+    //I don't know...just rewriting this code so the filter popup opens when clicked...
     $(".giveaway__hide").click(function() {
         $(".popup--hide-games input[name=game_id]").val($(this).attr("data-game-id")), $(".popup--hide-games .popup__heading__bold").text($(this).closest("h2").find(".giveaway__heading__name").text())
     });
@@ -209,19 +212,5 @@ function addGas($elements) {
             modalColor: "#3c424d"
         })
     });
-
-    /*
-     $(".sidebar__entry-insert, .sidebar__entry-delete").click(function() {
-        var e = $(this);
-        e.addClass("is-hidden"), e.closest("form").find(".sidebar__entry-loading").removeClass("is-hidden"), e.closest("form").find("input[name=do]").val(e.attr("data-do")), $.ajax({
-            url: "/ajax.php",
-            type: "POST",
-            dataType: "json",
-            data: e.closest("form").serialize(),
-            success: function(t) {
-                e.closest("form").find(".sidebar__entry-loading").addClass("is-hidden"), "success" === t.type ? e.hasClass("sidebar__entry-insert") ? e.closest("form").find(".sidebar__entry-delete").removeClass("is-hidden") : e.hasClass("sidebar__entry-delete") && e.closest("form").find(".sidebar__entry-insert").removeClass("is-hidden") : "error" === t.type && e.closest("form").html("undefined" != typeof t.link && t.link !== !1 ? '<a href="' + t.link + '" class="sidebar__error"><i class="fa fa-exclamation-circle"></i> ' + t.msg + "</a>" : '<div class="sidebar__error is-disabled"><i class="fa fa-exclamation-circle"></i> ' + t.msg + "</div>"), "undefined" != typeof t.entry_count && t.entry_count !== !1 && $(".live__entry-count").text(t.entry_count), $(".nav__points").text(t.points)
-            }
-        })
-    })*/
 }
 
