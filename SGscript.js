@@ -19,6 +19,7 @@ margin: 5px 10px;\
 padding: 0;\
 border: 0;\
 border-radius: 0;\
+border: 1px solid lightgrey !important;\
 } \
 .giveaway__summary {\
 background-color: white;\
@@ -27,6 +28,7 @@ z-index: 10;\
 border: 1px solid lightgrey;\
 border-right: 0;\
 height: 79px;\
+border-left: 0;\
 } \
 .giveaway__columns > div {\
 padding: 0;\
@@ -72,6 +74,7 @@ box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24) !important;\
 } \
 .global__image-outer-wrap.global__image-outer-wrap--game-medium {\
 border-radius: 0;\
+border-right: 0;\
 } \
 .fadein, .fadeout {\
 opacity: 0;\
