@@ -85,9 +85,16 @@ opacity:1;\
 }');
 
 $('document').ready(function(){
-    filterGas($( ".giveaway__row-outer-wrap" ));
+    //filterGas($( ".giveaway__row-outer-wrap" ));
     init();
     formatGAsList($( ".giveaway__row-outer-wrap" ));
+
+    var pagesToLoad = localStorage.getItem("NUM_PAGES");
+    localStorage.removeItem("NUM_PAGES");
+
+    loadPages(2, pagesToLoad-1);
+    addEventHandlerToHideGame();
+
 });
 
 function init() {
@@ -165,7 +172,7 @@ function formatGAsList($list) {
             })
             .fail(function() {
                 console.log('Error.');
-            })
+            });
         });
     });
 };
@@ -175,9 +182,40 @@ function loadGas() {
         url: 'http://www.steamgifts.com/giveaways/search?page=' + (++LAST_LOADED_PAGE),
         context: document.body
     }).done(function(data) {
-        var $elems = filterGas($(data).find(".giveaway__row-outer-wrap" ).trigger('click'));
+        //var $elems = filterGas($(data).find(".giveaway__row-outer-wrap" ));
+        var $elems = $(data).find(".giveaway__row-outer-wrap" );
         addGas($elems);
-        console.log(LAST_LOADED_PAGE);
+    });
+}
+
+var pages = [];
+var loadingPages = false;
+var scroll;
+function loadPages(first, last) {
+    scroll = $('body').scrollTop();
+    for(i = first; i <= last; i++) {
+        $.ajax({
+            url: 'http://www.steamgifts.com/giveaways/search?page=' + i
+        }).done(function(data) {
+            loadingPages = true;
+            var p = this.url.split('page=')[1];
+            pages[p] = $(data).find(".giveaway__row-outer-wrap");
+        }).fail(function() {
+            console.log('Error');
+        });
+    }
+    $(document).ajaxStop(function() {
+        if(!loadingPages) return;
+        for(i = first; i <= last; i++) {
+            LAST_LOADED_PAGE++;
+            addGas(pages[i]);
+        }
+
+        var scrollOffset = localStorage.getItem('SCROLL_Y');
+        $('body').scrollTop(scrollOffset);
+        localStorage.setItem('SCROLL_Y', 0);
+
+        loadingPages = false;
     });
 }
 
@@ -202,10 +240,16 @@ function addGas($elements) {
 
     $('#pg'+LAST_LOADED_PAGE).removeClass('fadeout').addClass('fadein');
 
+    addEventHandlerToHideGame();
+}
 
+function addEventHandlerToHideGame() {
     //I don't know...just rewriting this code so the filter popup opens when clicked...
     $(".giveaway__hide").click(function() {
         $(".popup--hide-games input[name=game_id]").val($(this).attr("data-game-id")), $(".popup--hide-games .popup__heading__bold").text($(this).closest("h2").find(".giveaway__heading__name").text())
+        //added to retain the same number of opened pages as before the hiding game refresh
+        localStorage.setItem("NUM_PAGES", LAST_LOADED_PAGE + 1);
+        localStorage.setItem('SCROLL_Y', $('body').scrollTop());   
     });
     $(".trigger-popup").click(function() {
         $("." + $(this).attr("data-popup")).bPopup({
